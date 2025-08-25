@@ -25,7 +25,7 @@ searchInput.addEventListener("keypress", (e)=>{
   if(e.key === "Enter"){
     searchUser();
   }
-})
+});
 
 async function searchUser(){
   const username = searchInput.value.trim();
@@ -33,22 +33,19 @@ async function searchUser(){
   
   try {
     profileContainer.classList.add("hidden");
-    errorContainer.classList.add("hidden")
-    const response = await fetch(`https://api.github.com/users/${username}`, {
-      headers: {
-        Authorization: "token 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" // 👈 put your token here
-      }
-    });
+    errorContainer.classList.add("hidden");
+
+    // ✅ no token in frontend
+    const response = await fetch(`https://api.github.com/users/${username}`);
 
     if(!response.ok) throw new Error("User not found");
     const userData = await response.json();
-    console.log(userData);
 
     displayUserData(userData);
 
     fetchRepositories(userData.repos_url);
   } catch (error) {
-      showError();
+    showError();
   }
 }
 
@@ -66,33 +63,31 @@ function displayUserData(user){
   following.textContent = user.following;
   repos.textContent = user.public_repos;
 
-  if(user.company) companyElement.textContent = user.company;
-  else companyElement.textContent = "Not Specified";
+  companyElement.textContent = user.company || "Not Specified";
 
   if (user.blog) {
     blogElement.textContent = user.blog;
     blogElement.href = user.blog.startsWith("http") ? user.blog : `https://${user.blog}`;
-    blogContainer.style.display = "block";
   } else {
     blogElement.textContent = "No website";
     blogElement.href = "#";
   }
 
-
   if (user.email) {
-    emailElement.textContent = user.email; 
-    emailElement.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${user.email}`;
-    emailElement.target = "_blank";  // open in new tab
-    emailContainer.style.display = "block";
+    // Email exists
+    emailElement.textContent = user.email;
+    emailElement.href = `https://mail.google.com/mail/?view=cm&to=${user.email}`;
+    emailElement.target = "_blank";
   } else {
-    emailElement.textContent = "No Email"; 
-    emailElement.href = "#";
-    emailContainer.style.display = "none";
-}
+    // Email is private: show placeholder, still opens Gmail
+    const fakeEmail = "example@gmail.com"; // placeholder
+    emailElement.textContent = fakeEmail;
+    emailElement.href = `https://mail.google.com/mail/?view=cm&to=${fakeEmail}`;
+    emailElement.target = "_blank";
+  }
 
 
 
-  // show the profile
   profileContainer.classList.remove("hidden");
 }
 
@@ -106,32 +101,26 @@ function formatDate(date){
     year:"numeric",
     month: "short",
     day:"numeric"
-  })
+  });
 }
 
 async function fetchRepositories(reposUrl){
   reposContainer.innerHTML = '<div class="loading-repos">Loading Repositories...</div>';
 
   try {
-    const response = await fetch(reposUrl, {
-      headers: {
-        Authorization: "token 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"
-      }
-    });
+    const response = await fetch(reposUrl);
     const repos = await response.json();
     displayRepos(repos);
 
   } catch (error) {
-      reposContainer.innerHTML = reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
-;
+    reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
   }
 }
 
 function displayRepos(repos){
   if(repos.length === 0) {
-    reposContainer.innerHTML = reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
-;
-    return
+    reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
+    return;
   }
   reposContainer.innerHTML="";
   
@@ -147,30 +136,17 @@ function displayRepos(repos){
       </a>
       <p class="repo-description">${repo.description || "No description available"}</p>
       <div class="repo-meta">
-        ${
-          repo.language
-            ? `
-          <div class="repo-meta-item">
-            <i class="fas fa-circle"></i> ${repo.language}
-          </div>
-        `
-            : ""
-        }
-        <div class="repo-meta-item">
-          <i class="fas fa-star"></i> ${repo.stargazers_count}
-        </div>
-        <div class="repo-meta-item">
-          <i class="fas fa-code-fork"></i> ${repo.forks_count}
-        </div>
-        <div class="repo-meta-item">
-          <i class="fas fa-history"></i> ${updatedAt}
-        </div>
+        ${repo.language ? `<div class="repo-meta-item"><i class="fas fa-circle"></i> ${repo.language}</div>` : ""}
+        <div class="repo-meta-item"><i class="fas fa-star"></i> ${repo.stargazers_count}</div>
+        <div class="repo-meta-item"><i class="fas fa-code-fork"></i> ${repo.forks_count}</div>
+        <div class="repo-meta-item"><i class="fas fa-history"></i> ${updatedAt}</div>
       </div>
     `;
 
     reposContainer.appendChild(repoCard);
-  })
+  });
 }
 
-searchInput.value = "github"
+// Default search
+searchInput.value = "github";
 searchUser();
