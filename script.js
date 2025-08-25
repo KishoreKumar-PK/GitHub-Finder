@@ -34,7 +34,11 @@ async function searchUser(){
   try {
     profileContainer.classList.add("hidden");
     errorContainer.classList.add("hidden")
-    const response = await fetch(`https://api.github.com/users/${username}`);
+    const response = await fetch(`https://api.github.com/users/${username}`, {
+      headers: {
+        Authorization: "token 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" // 👈 put your token here
+      }
+    });
 
     if(!response.ok) throw new Error("User not found");
     const userData = await response.json();
@@ -76,13 +80,17 @@ function displayUserData(user){
 
 
   if (user.email) {
-    emailElement.textContent = `${user.email}`;
-    emailElement.href = `${user.email}`;
+    emailElement.textContent = user.email; 
+    emailElement.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${user.email}`;
+    emailElement.target = "_blank";  // open in new tab
     emailContainer.style.display = "block";
   } else {
-    emailElement.textContent = "No Email";
+    emailElement.textContent = "No Email"; 
     emailElement.href = "#";
-  }
+    emailContainer.style.display = "none";
+}
+
+
 
   // show the profile
   profileContainer.classList.remove("hidden");
@@ -105,18 +113,24 @@ async function fetchRepositories(reposUrl){
   reposContainer.innerHTML = '<div class="loading-repos">Loading Repositories...</div>';
 
   try {
-    const response = await fetch(reposUrl)
+    const response = await fetch(reposUrl, {
+      headers: {
+        Authorization: "token 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"
+      }
+    });
     const repos = await response.json();
     displayRepos(repos);
 
   } catch (error) {
-      reposContainer.innerHTML = '<div class="no-repos">${error.message}</div>';
+      reposContainer.innerHTML = reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
+;
   }
 }
 
 function displayRepos(repos){
   if(repos.length === 0) {
-    reposContainer.innerHTML = '<div class="no-repos">${error.message}</div>';
+    reposContainer.innerHTML = reposContainer.innerHTML = `<div class="no-repos">No repositories found</div>`;
+;
     return
   }
   reposContainer.innerHTML="";
